@@ -3,7 +3,6 @@
 #include <fstream>
 #include <sstream>
 #include <map>
-#include <algorithm>
 #include <vector>
 #include <chrono>
 using namespace std;
@@ -12,44 +11,78 @@ int main()
 {
 	auto start_time = Clock::now();
 	ifstream in_file;
-	map<string, int> reserved_word_maps;
-  	reserved_word_maps = 
-	{
-    {"if",0},		{"return",0},	{"void",0},		{"int",0},		{"const",0}, 
-    {"else",0},		{"for",0},		{"case",0},		{"break",0},	{"sizeof",0}, 
-    {"static",0},	{"while",0},	{"long",0},		{"default",0},	{"typedef",0},
-    {"switch",0},	{"short",0},	{"char",0},		{"struct",0},	{"double",0}, 
-    {"continue",0},	{"do",0},		{"unsigned",0},	{"extern",0},	{"float",0}, 
-    {"enum",0},		{"goto",0},		{"register",0},	{"auto",0},		{"signed",0},
-    {"union",0},	{"volatile",0}
-    };
-	in_file.open("test1.cpp");   
+	in_file.open("test2.cpp");   
 	if (!in_file.is_open())
 	{
 		cout << "open file error" << endl;
 		return 0;
 	}
-	string file_to_string, temp;
+	string file_to_string, string_in_file, temp;
 	while (getline(in_file, temp))
 	{	
-		file_to_string += temp;
-		file_to_string.append(" ");
+		int i = 0;
+		while(temp[i] == ' ')
+			++i;
+		if(temp[i] == '/' && temp[i+1] == '/')
+			continue;
+		string_in_file += temp;
+		string_in_file.append(" ");
 	}
 	in_file.close();
-	//将标点符号转换成空格 
-	for (int i = 0; i < file_to_string.length(); i++)
+	for (int i = 0; i < string_in_file.length(); ++i)	//handle signs
 	{
-		if (ispunct(file_to_string[i]))  
-			file_to_string[i] = ' ';
+		if(string_in_file[i] == '\"' ){
+			++i;
+			while(string_in_file[i++] != '\"'){}		
+		}	
+		else if(string_in_file[i] == '/' && string_in_file[i+1] == '*' )
+			while(string_in_file[i] != '*' || string_in_file[i+1] != '/')
+				++i;
+		else if(string_in_file[i] == '{' || string_in_file[i] == '}')
+		{
+			file_to_string += ' ';
+			file_to_string += string_in_file[i];
+			file_to_string += ' ';
+		}
+		else if (ispunct(string_in_file[i]))  
+			file_to_string += ' ';
+		else
+			file_to_string += string_in_file[i];
 	}
 	stringstream ss(file_to_string);
-	int case_num[100]={0};
+	map<string, int> reserved_word_maps;
+  	reserved_word_maps = {
+    {"auto",0},		{"break",0},	{"case",0},		{"char",0},		{"const",0},
+	{"continue",0},	{"default",0},	{"do",0},		{"double",0},	{"else",0},
+	{"enum",0},		{"extern",0},	{"float",0},	{"for",0},		{"goto",0},
+	{"if",0},		{"int",0},		{"long",0},		{"register",0},	{"return",0},
+	{"short",0},	{"signed",0},	{"sizeof",0},	{"static",0},	{"struct",0},
+	{"switch",0},	{"typedef",0},	{"union",0},	{"unsigned",0},	{"void",0},				 
+    {"volatile",0},	{"while",0}
+    };
+    vector<int> case_num;
+    bool switch_num_change = 1;  
 	while (ss >> temp)
 	{	
 		if(temp == "case")
+		{	
+			if(switch_num_change == 0)
+			{
+				int back = case_num.back();
+				case_num.pop_back();
+				case_num.push_back(++back);
+			}
+			else
+			{
+				case_num.push_back(1);
+				switch_num_change = 0;
+			}
+			reserved_word_maps["case"]++;
+		}
+		else if(temp == "switch")
 		{
-			case_num[reserved_word_maps["switch"]]++;
-			reserved_word_maps[temp]++;
+			switch_num_change = 1;
+			reserved_word_maps["switch"]++;
 		}
 		else
 		{
@@ -58,8 +91,7 @@ int main()
 				if(it->first == temp)
 					reserved_word_maps[temp]++;
 			}
-		}
-		
+		}	
 	}
  	int total_num = 0;
  	int switch_num = reserved_word_maps["switch"];
@@ -68,11 +100,11 @@ int main()
  	cout << "total num: " << total_num << endl;
  	cout << "switch num: " << switch_num << endl;
  	cout << "case num: "; 
- 	for(int i = 1; i <= switch_num; ++i)
+ 	for(int i = 0; i < switch_num; ++i)
  		cout << case_num[i] << " " ;
 	cout << endl;
  	auto end_time = Clock::now();
  	auto computing_time = chrono::duration_cast<chrono::microseconds>(end_time - start_time);
-	cout << "Computing time = " << computing_time.count() << " ms" << endl;
+	cout << "Computing time = " << computing_time.count() << " ns" << endl;
 	return 0;
 }
