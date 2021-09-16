@@ -43,19 +43,36 @@ int main()
 			file_to_string[i] = ' ';
 	}
 	stringstream ss(file_to_string);
+	int case_num[100]={0};
 	while (ss >> temp)
-	{
-		for (map<string, int>::iterator it = reserved_word_maps.begin(); it != reserved_word_maps.end(); it++)
-		{	if(it->first == temp)
-				reserved_word_maps[temp]++;
+	{	
+		if(temp == "case")
+		{
+			case_num[reserved_word_maps["switch"]]++;
+			reserved_word_maps[temp]++;
 		}
+		else
+		{
+			for (map<string, int>::iterator it = reserved_word_maps.begin(); it != reserved_word_maps.end(); it++)
+			{	
+				if(it->first == temp)
+					reserved_word_maps[temp]++;
+			}
+		}
+		
 	}
  	int total_num = 0;
+ 	int switch_num = reserved_word_maps["switch"];
 	for (map<string, int>::iterator it = reserved_word_maps.begin(); it != reserved_word_maps.end(); it++)
 		total_num += it->second;
- 	cout << "total num = " << total_num<<endl;
+ 	cout << "total num: " << total_num << endl;
+ 	cout << "switch num: " << switch_num << endl;
+ 	cout << "case num: "; 
+ 	for(int i = 1; i <= switch_num; ++i)
+ 		cout << case_num[i] << " " ;
+	cout << endl;
  	auto end_time = Clock::now();
  	auto computing_time = chrono::duration_cast<chrono::microseconds>(end_time - start_time);
-	cout << "Computing time = " << computing_time.count() / 1000 << " ms" << endl;
+	cout << "Computing time = " << computing_time.count() << " ms" << endl;
 	return 0;
 }
