@@ -5,10 +5,12 @@
 #include <map>
 #include <algorithm>
 #include <vector>
+#include <chrono>
 using namespace std;
- 
+typedef chrono::high_resolution_clock Clock;
 int main()
 {
+	auto start_time = Clock::now();
 	ifstream in_file;
 	map<string, int> reserved_word_maps;
   	reserved_word_maps = {
@@ -50,6 +52,10 @@ int main()
  	int total_num = 0;
 	for (map<string, int>::iterator it = reserved_word_maps.begin(); it != reserved_word_maps.end(); it++)
 		total_num += it->second;
- 	cout << "total num:= " << total_num<<endl;
+ 	cout << "total num = " << total_num<<endl;
+ 	auto end_time = Clock::now();
+ 	auto computing_time = chrono::duration_cast<chrono::microseconds>(end_time - start_time);
+	cout << "Computing time = " << computing_time.count() / 1000 << " ms" << endl;
+	
 	return 0;
 }
