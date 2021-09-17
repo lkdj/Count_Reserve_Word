@@ -8,10 +8,10 @@
 #include <stack>
 using namespace std;
 typedef chrono::high_resolution_clock Clock;
-string TransformFileToString()
+string TransformFileToString(string file_position)
 {
 	ifstream in_file;
-	in_file.open("test1.cpp");   
+	in_file.open(file_position);   
 	if (!in_file.is_open())
 	{
 		cout << "open file error" << endl;
@@ -23,10 +23,10 @@ string TransformFileToString()
 		int i = 0;
 		while(temp[i] == ' ')
 			++i;
-		if(temp[i] == '/' && temp[i+1] == '/')
+		if(temp[i] == '/' && temp[i+1] == '/')  //no need to transform "//" kind annotation
 			continue;
 		string_in_file += temp;
-		string_in_file.append(" ");
+		string_in_file.append(" ");  //add space between adjacent lines
 	}
 	in_file.close();
 	return string_in_file;
@@ -36,21 +36,21 @@ string HandleSigns(string string_in_file)
 	string file_to_string;
 	for (int i = 0; i < string_in_file.length(); ++i)	
 	{
-		if(string_in_file[i] == '\"' )
+		if(string_in_file[i] == '\"' )  //no need to transform words in double quotation marks
 		{
 			++i;
 			while(string_in_file[i++] != '\"'){}		
 		}	
-		else if(string_in_file[i] == '/' && string_in_file[i+1] == '*' )
+		else if(string_in_file[i] == '/' && string_in_file[i+1] == '*' )  //don't transform "/**/" kind annotation
 			while(string_in_file[i] != '*' || string_in_file[i+1] != '/')
 				++i;
-		else if(string_in_file[i] == '{' || string_in_file[i] == '}')
+		else if(string_in_file[i] == '{' || string_in_file[i] == '}')  //retain braces
 		{
 			file_to_string += ' ';
 			file_to_string += string_in_file[i];
 			file_to_string += ' ';
 		}
-		else if (ispunct(string_in_file[i]))  
+		else if (ispunct(string_in_file[i]))  //transform punctuation into space
 			file_to_string += ' ';
 		else
 			file_to_string += string_in_file[i];
@@ -60,8 +60,8 @@ string HandleSigns(string string_in_file)
 int BranchPart(
 	string temp,
 	stringstream& ss,
-	map<string, int> &reserved_word_maps,
-	stack<string> &s,
+	map<string, int>& reserved_word_maps,
+	stack<string>& if_else_stack,
 	int& if_else_num,
 	int& if_elseif_else_num)
 {
@@ -69,18 +69,18 @@ int BranchPart(
 	{
 		if(temp == "if")
 			reserved_word_maps["if"]++;
-		s.push(temp);
+		if_else_stack.push(temp);
 	}			
-	else if(temp == "else") 
+	else if(temp == "else")  //else or elseif appear
 	{	
 		reserved_word_maps["else"]++;
 		ss >> temp;
-		if(temp == "if")
+		if(temp == "if")  //elseif appear
 		{
 			reserved_word_maps["if"]++;
-			s.push("elseif");
+			if_else_stack.push("elseif");
 		}	
-		else
+		else  //else appear
 		{	
 			int flag = 0;
 			for (map<string, int>::iterator it = reserved_word_maps.begin(); it != reserved_word_maps.end(); it++)
@@ -88,26 +88,26 @@ int BranchPart(
 				if(it -> first == temp)
 					reserved_word_maps[temp]++;
 			}
-			while(s.top() != "if")
+			while(if_else_stack.top() != "if")
 			{
-				if(s.top() == "elseif")
-					flag = 1;
-				s.pop();
+				if(if_else_stack.top() == "elseif")
+					flag = 1;  
+				if_else_stack.pop();
 			}
-			s.pop();
-			if(flag == 1)
+			if_else_stack.pop();
+			if(flag == 1)  //elseif has appeared
 				if_elseif_else_num++;
 			else
 				if_else_num++;
 		}	
 		if(temp == "{")
-			s.push("{");	
+			if_else_stack.push("{");	
 	}
 	else if(temp == "}")
 	{
-		while(s.top() != "{")
-			s.pop();
-		s.pop();	
+		while(if_else_stack.top() != "{")
+			if_else_stack.pop();
+		if_else_stack.pop();	
 	}
 	else
 		return 0;
@@ -115,10 +115,9 @@ int BranchPart(
 }
 int SwitchPart(
 	string temp,
-	stringstream& ss,
-	map<string, int> &reserved_word_maps,
+	map<string, int>& reserved_word_maps,
 	vector<int>& case_num,
-	bool& switch_num_change )
+	bool& switch_num_change)
 {
 	if(temp == "case")
 	{	
@@ -135,7 +134,7 @@ int SwitchPart(
 		}
 		reserved_word_maps["case"]++;
 	}
-	else if(temp == "switch")
+	else if(temp == "switch")  // a new switch appear
 	{
 		switch_num_change = 1;
 		reserved_word_maps["switch"]++;
@@ -150,23 +149,24 @@ void PrintResult(
 	vector<int> case_num,
 	int if_else_num,
 	int if_elseif_else_num,
-	auto start_time)
+	string grade)
 {
 	cout << "total num: " << total_num << endl;
- 	cout << "switch num: " << switch_num << endl;
- 	cout << "case num: "; 
- 	for(int i = 0; i < switch_num; ++i)
- 		cout << case_num[i] << ' ' ;
-	cout << endl << "if-else num: " << if_else_num << endl;
-	cout << "if-elseif-else num: " << if_elseif_else_num << endl;
- 	auto end_time = Clock::now();
- 	auto computing_time = chrono::duration_cast<chrono::microseconds>(end_time - start_time);
-	cout << "Computing time = " << computing_time.count() << " ns" << endl;
+	if(grade[0] > '1')
+	{
+		cout << "switch num: " << switch_num << endl << "case num: "; 
+ 		for(int i = 0; i < switch_num; ++i)
+ 			cout << case_num[i] << ' ' ;
+	}
+ 	if(grade[0] > '2')
+		cout << endl << "if-else num: " << if_else_num;
+	if(grade[0] > '3')
+		cout << endl << "if-elseif-else num: " << if_elseif_else_num << endl;
 }
-int main()
+int main(int argc, char* argv[])
 {
 	auto start_time = Clock::now();
-	string file_to_string = HandleSigns(TransformFileToString());
+	string file_to_string = HandleSigns(TransformFileToString(argv[1]));
 	stringstream ss(file_to_string);
 	map<string, int> reserved_word_maps;
   	reserved_word_maps = {
@@ -178,17 +178,17 @@ int main()
 	{"switch",0},	{"typedef",0},	{"union",0},	{"unsigned",0},	{"void",0},				 
     {"volatile",0},	{"while",0}
     };
+	bool switch_num_change = 1; //a new switch appear
     vector<int> case_num;
-    bool switch_num_change = 1; 
-	stack<string> s;
+	stack<string> if_else_stack;
 	int if_else_num = 0;
 	int if_elseif_else_num = 0;
 	string temp; 
 	while (ss >> temp)
 	{	
-		if(BranchPart(temp, ss, reserved_word_maps, s, if_else_num, if_elseif_else_num))
+		if(BranchPart(temp, ss, reserved_word_maps, if_else_stack, if_else_num, if_elseif_else_num))
 			continue;
-		else if(SwitchPart(temp, ss, reserved_word_maps, case_num, switch_num_change))
+		else if(SwitchPart(temp, reserved_word_maps, case_num, switch_num_change))
 			continue;	
 		else
 		{
@@ -203,6 +203,9 @@ int main()
 	for (map<string, int>::iterator it = reserved_word_maps.begin(); it != reserved_word_maps.end(); it++)
 		total_num += it->second;
 	int switch_num = reserved_word_maps["switch"];
- 	PrintResult(total_num, switch_num, case_num, if_else_num, if_elseif_else_num, start_time);
+ 	PrintResult(total_num, switch_num, case_num, if_else_num, if_elseif_else_num, argv[2]);
+ 	auto end_time = Clock::now();
+ 	auto computing_time = chrono::duration_cast<chrono::microseconds>(end_time - start_time);
+	cout << "Computing time = " << computing_time.count() << " ¦Ìs" << endl;
 	return 0;
 }
