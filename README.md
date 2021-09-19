@@ -2,7 +2,7 @@
 
 - COUNT.cpp以及COUNT.h
 
-  完整实现不同完成等级关键字提取r任务的两个文档
+  完整实现不同完成等级关键字提取任务的两个文档
 
   编译方式：g++ COUNT.cpp -std=c++11 -o  COUNT.exe
 
