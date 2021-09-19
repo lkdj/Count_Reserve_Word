@@ -7,148 +7,146 @@
 #include <chrono>
 #include <stack>
 #include <omp.h>
-//#include <mpi.h>
 using namespace std;
 class SwitchPart{
 	private:
-		int switch_num;    // optimize argument
-		int case_num;
-		vector<int> case_array;
-		bool switch_num_change;
+		int switch_num_;    // optimize argument
+		int case_num_;
+		vector<int> case_array_;
+		bool switch_num_change_;
 	public:
 		SwitchPart();
 		int Count(string);
-		int GetSwitchNum();
-		int GetCaseNum();
-		vector<int> GetCaseArray();
+		int GetSwitch();
+		int GetCase();
+		vector<int> GetArray();
 }; 
 SwitchPart::SwitchPart()
 {
-	switch_num_change = 0;
-	switch_num = 0;    
-	case_num = 0;
-	vector<int> case_array = {0};
+	switch_num_change_ = 0;
+	switch_num_ = 0;    
+	case_num_ = 0;
+	vector<int> case_array_ = {0};
 }
-int SwitchPart::GetCaseNum()
+int SwitchPart::GetCase()
 {
-	return case_num;
+	return case_num_;
 }
-int SwitchPart::GetSwitchNum()
+int SwitchPart::GetSwitch()
 {
-	return switch_num;
+	return switch_num_;
 }
-vector<int> SwitchPart::GetCaseArray()
+vector<int> SwitchPart::GetArray()
 {
-	return case_array;
+	return case_array_;
 }
 int SwitchPart::Count(string temp)
 {
 	if(temp == "case")
 	{	
-		if(switch_num_change == 0)
+		if(switch_num_change_ == 0)
 		{
-			int back = case_array.back();
-			case_array.pop_back();
-			case_array.push_back(++back);
+			int back = case_array_.back();
+			case_array_.pop_back();
+			case_array_.push_back(++back);
 		}
 		else
 		{
-			case_array.push_back(1);
-			switch_num_change = 0;
+			case_array_.push_back(1);
+			switch_num_change_ = 0;
 		}
-		case_num++;
+		case_num_++;
 	}
 	else if(temp == "switch")  // a new switch appear
 	{
-		switch_num_change = 1;
-		switch_num++;
+		switch_num_change_ = 1;
+		switch_num_++;
 	}
 	else
 		return 0;
 	return 1;
 }
-class BranchPart{
+class IfPart{
 	private:
-		int if_num;
-		int else_num;
-		stack<string> if_else_stack;
-		int if_else_num;
-		int if_elseif_else_num;
+		int if_num_;
+		int else_num_;
+		stack<string> if_else_stack_;
+		int if_else_num_;
+		int if_elseif_else_num_;
 	public:
-		BranchPart();
+		IfPart();
 		int Count(string, stringstream&);
-		int GetIfNum();
-		int GetElseNum();
-		int GetIfElseNum();
-		int GetIfElseifElseNum();
+		int GetIf();
+		int GetElse();
+		int GetIfElse();
+		int GetElseif();
 }; 
-BranchPart::BranchPart()
+IfPart::IfPart()
 {
-	if_num = 0;
-	else_num = 0;
-	if_else_num = 0;
-	if_elseif_else_num = 0;
+	if_num_ = 0;
+	else_num_ = 0;
+	if_else_num_ = 0;
+	if_elseif_else_num_ = 0;
 }
-int BranchPart::GetIfNum(){
-	return if_num;
+int IfPart::GetIf(){
+	return if_num_;
 }
-int BranchPart::GetElseNum(){
-	return else_num;
+int IfPart::GetElse(){
+	return else_num_;
 }
-int BranchPart::GetIfElseNum(){
-	return if_else_num;
+int IfPart::GetIfElse(){
+	return if_else_num_;
 }
-int BranchPart::GetIfElseifElseNum(){
-	return if_elseif_else_num;
+int IfPart::GetElseif(){
+	return if_elseif_else_num_;
 }
-int BranchPart::Count(string temp,stringstream& ss)
+int IfPart::Count(string temp,stringstream& ss)
 {
 	if(temp == "if" || temp == "{")
 	{
 		if(temp == "if")
-			if_num++;
-		if_else_stack.push(temp);
+			if_num_++;
+		if_else_stack_.push(temp);
 	}			
 	else if(temp == "else")  //else or elseif appear
 	{	
-		else_num++;
+		else_num_++;
 		ss >> temp;
 		if(temp == "if")  //elseif appear
 		{
-			if_num++;
-			if_else_stack.push("elseif");
+			if_num_++;
+			if_else_stack_.push("elseif");
 		}	
 		else  //else appear
 		{	
 			int flag = 0;
-			while(if_else_stack.top() != "if")
+			while(if_else_stack_.top() != "if")
 			{
-				if(if_else_stack.top() == "elseif")
+				if(if_else_stack_.top() == "elseif")
 					flag = 1;  
-				if_else_stack.pop();
+				if_else_stack_.pop();
 			}
-			if_else_stack.pop();
+			if_else_stack_.pop();
 			if(flag == 1)  //elseif has appeared
-				if_elseif_else_num++;
+				if_elseif_else_num_++;
 			else
-				if_else_num++;	
+				if_else_num_++;	
 			if(temp == "{")
-				if_else_stack.push("{");
+				if_else_stack_.push("{");
 			else 
 				return 0;
 		}		
 	}
 	else if(temp == "}")
 	{
-		while(if_else_stack.top() != "{")
-			if_else_stack.pop();
-		if_else_stack.pop();	
+		while(if_else_stack_.top() != "{")
+			if_else_stack_.pop();
+		if_else_stack_.pop();	
 	}
 	else
 		return 0;
 	return 1;		
 }
-typedef chrono::high_resolution_clock Clock;
 string TransformFileToString(string file_position)
 {
 	ifstream in_file;
@@ -198,7 +196,7 @@ string HandleSigns(string string_in_file)
 	}
 	return file_to_string;
 }
-void PrintResult(
+void Print(
 	int total_num,
 	int switch_num, 
 	vector<int> case_num,
@@ -211,7 +209,7 @@ void PrintResult(
 	{
 		cout << "switch num: " << switch_num << endl << "case num: "; 
  		for(int i = 0; i < switch_num; ++i)
- 			cout << case_num[i] << ' ' ;
+ 			cout << case_num[i] << ' ';
  		if(switch_num ==0 )
  			cout << '0';
 	}
@@ -222,11 +220,9 @@ void PrintResult(
 }
 int main(int argc, char* argv[])
 {
-	auto start_time = Clock::now();
 	string file_to_string = HandleSigns(TransformFileToString(argv[1]));
 	stringstream ss(file_to_string);
-	map<string, int> reserved_word_maps;
-  	reserved_word_maps = {
+	map<string, int> word_maps = {
     	{"auto",0},	{"break",0},	{"case",0},	{"char",0},	{"const",0},
 	{"continue",0},	{"default",0},	{"do",0},	{"double",0},	{"else",0},
 	{"enum",0},	{"extern",0},	{"float",0},	{"for",0},	{"goto",0},
@@ -237,27 +233,25 @@ int main(int argc, char* argv[])
     };
 	string temp; 
 	int total_num = 0;
-	SwitchPart count_switch_part;
-	BranchPart count_branch_part;
+	SwitchPart switch_part;
+	IfPart if_part;
 	while (ss >> temp)
 	{	
-		if(count_branch_part.Count(temp, ss))
+		if(if_part.Count(temp, ss))
 			continue;
-		else if(count_switch_part.Count(temp))
+		else if(switch_part.Count(temp))
 			continue;	
 		else
-		{
-			for (map<string, int>::iterator it = reserved_word_maps.begin(); it != reserved_word_maps.end(); it++)  //计算过程优化，本身不用遍历if,case,else,switch等但是为了表的完整性 
+		{	
+			for (map<string, int>::iterator it = word_maps.begin(); it != word_maps.end(); it++)  //still traverse "if" part to remain map's completeness 
 			{	
 				if(it->first == temp)
 					total_num++;
 			}
 		}			
 	}
-	total_num += (count_branch_part.GetIfNum() + count_branch_part.GetElseNum() + count_switch_part.GetSwitchNum() + count_switch_part.GetCaseNum());
- 	PrintResult(total_num, count_switch_part.GetSwitchNum(), count_switch_part.GetCaseArray(), count_branch_part.GetIfElseNum(), count_branch_part.GetIfElseifElseNum(), argv[2]);
- 	auto end_time = Clock::now();
- 	auto computing_time = chrono::duration_cast<chrono::microseconds>(end_time - start_time);
-	cout << "Computing time = " << computing_time.count() << " μs" << endl;
+	total_num += (if_part.GetIf() + if_part.GetElse() + switch_part.GetSwitch() + switch_part.GetCase());
+ 	Print(total_num, switch_part.GetSwitch(), switch_part.GetArray(), 
+	 	if_part.GetIfElse(), if_part.GetElseif(), argv[2]);
 	return 0;
 }
