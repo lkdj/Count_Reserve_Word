@@ -4,7 +4,7 @@
 CuSuite* TransformGetSuite();
 CuSuite* HandleSignsGetSuite();
 CuSuite* BranchGetSuite();
-CuSuite* SwitchGetSuite();/////////////
+CuSuite* SwitchGetSuite();
 
 void RunAllTests(void)
 {
@@ -14,7 +14,7 @@ void RunAllTests(void)
  	CuSuiteAddSuite(suite, TransformGetSuite());
  	CuSuiteAddSuite(suite, HandleSignsGetSuite());
  	CuSuiteAddSuite(suite, BranchGetSuite());
- 	CuSuiteAddSuite(suite, SwitchGetSuite());////////////
+ 	CuSuiteAddSuite(suite, SwitchGetSuite());
  	
 	CuSuiteRun(suite);
 	CuSuiteSummary(suite, output);
