@@ -4,6 +4,7 @@
 #include <sstream>
 #include <vector>
 #include <stack>
+#include <map> 
 using namespace std;
 class SwitchPart{
 	private:
@@ -27,7 +28,7 @@ class IfPart{
 		int if_elseif_else_num_;
 	public:
 		IfPart();
-		int Count(string, stringstream&);
+		int Count(string&, stringstream&);
 		int GetIf();
 		int GetElse();
 		int GetIfElse();
@@ -35,13 +36,7 @@ class IfPart{
 }; 
 string TransformFileToString(string file_position);
 string HandleSigns(string string_in_file);
-void Print(
-	int total_num,
-	int switch_num, 
-	vector<int> case_num,
-	int if_else_num,
-	int if_elseif_else_num,
-	string grade);
-	
+void Print(int, int, vector<int>, int, int,	string);
+void FunctionControl(string, stringstream&, map<string, int>&, int&, SwitchPart&, IfPart&);	
 
 #endif
